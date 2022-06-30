@@ -29,7 +29,9 @@ public class Repository implements IDistributedRepository {
     public IAggregate aggregate(String[] ids) throws RepException {
         try {
             for(String id :  ids){
-                aggregateList.add((IDistributedRepository) directory.find(id));
+                IDistributedRepository idis = (IDistributedRepository) directory.find(id);
+                if(idis==null) throw new RepException("Ambiguous Repository");
+                aggregateList.add(idis);
             }
         }
         catch (Exception e){
@@ -42,6 +44,14 @@ public class Repository implements IDistributedRepository {
     @Override
     public void add(String key, Integer value) throws RepException{
         try {
+        if(aggregateList.size()>0){
+            for (IDistributedRepository rep : aggregateList) {
+                rep.add(key, value);
+            }
+            aggregateList.clear();
+            return;
+        }
+
             if (dictionary.containsKey(key)) {
                 dictionary.get(key).add(value);
             } else {
@@ -58,7 +68,13 @@ public class Repository implements IDistributedRepository {
     @Override
     public void set(String key, Integer value)  throws RepException{
         try {
-
+            if(aggregateList.size()>0){
+                for (IDistributedRepository rep : aggregateList) {
+                    rep.set(key, value);
+                }
+                aggregateList.clear();
+                return;
+            }
 
             ArrayList<Integer> list = new ArrayList<>();
             list.add(value);
@@ -72,6 +88,11 @@ public class Repository implements IDistributedRepository {
     @Override
     public void delete(String key) throws RepException{
         try {
+            if(aggregateList.size()>0){
+                aggregateList.get(0).delete(key);
+                aggregateList.clear();
+                return;
+            }
             dictionary.remove(key);
         }
         catch (Exception e){
@@ -82,9 +103,15 @@ public class Repository implements IDistributedRepository {
     @Override
     public String listKeys() throws RepException{
         try {
+
+            if(aggregateList.size()==1){
+               return  aggregateList.get(0).listKeys();
+            }
             StringBuilder sb = new StringBuilder();
             ArrayList<String> list = new ArrayList<>(dictionary.keySet());
+            if(list.size()==0) return "";
             sb.append(list.get(0));
+            if(list.size()==1)return sb.toString();
             for (int i = 1; i < list.size(); i++) {
                 sb.append(",").append(list.get(i));
             }
@@ -93,23 +120,35 @@ public class Repository implements IDistributedRepository {
         catch (Exception e){
             throw new RepException(e.getMessage());
         }
+        finally {
+            aggregateList.clear();
+        }
     }
 
     @Override
     public String getValue(String key) throws RepException{
         try {
+            if(aggregateList.size()==1){
+                return aggregateList.get(0).getValue(key);
+            }
             if (dictionary.containsKey(key)) {
                 return dictionary.get(key).get(0).toString();
-            } else return "error";
+            } else throw new RepException("error");
         }
         catch (Exception e){
             throw new RepException(e.getMessage());
+        }
+        finally {
+            aggregateList.clear();
         }
     }
 
     @Override
     public String getValues(String key) throws RepException{
         try {
+            if(aggregateList.size()==1){
+                return aggregateList.get(0).getValues(key);
+            }
             if (dictionary.containsKey(key)) {
                 StringBuilder sb = new StringBuilder();
                 ArrayList<Integer> list = dictionary.get(key);
@@ -118,10 +157,13 @@ public class Repository implements IDistributedRepository {
                     sb.append(",").append(list.get(i));
                 }
                 return sb.toString();
-            } else return "error";
+            } else throw new RepException("error");
         }
         catch (Exception e){
             throw new RepException(e.getMessage());
+        }
+        finally {
+            aggregateList.clear();
         }
     }
 
@@ -140,7 +182,7 @@ public class Repository implements IDistributedRepository {
                 return String.valueOf(sum);
             } else {
                 aggregateList.clear();
-                return "error";
+                throw new RepException("error");
             }
         }
         catch (Exception e){
@@ -153,7 +195,7 @@ public class Repository implements IDistributedRepository {
         try {
             if (dictionary.containsKey(key)) {
                 return String.valueOf(Collections.max(dictionary.get(key)));
-            } else return "error";
+            } else throw new RepException("error");
         }
         catch (Exception e){
             throw new RepException(e.getMessage());
@@ -163,6 +205,11 @@ public class Repository implements IDistributedRepository {
     @Override
     public void resetAll() throws RepException{
         try {
+            if(aggregateList.size()==1){
+                aggregateList.get(0).resetAll();
+                aggregateList.clear();
+                return;
+            }
             dictionary.clear();
         }catch (Exception e){
             throw new RepException(e.getMessage());

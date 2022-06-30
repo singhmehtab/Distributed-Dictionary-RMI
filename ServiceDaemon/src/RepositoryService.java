@@ -9,10 +9,10 @@ import java.rmi.server.UnicastRemoteObject;
 public class RepositoryService {
 
     public static void main(String[] args) {
-        Integer myPort = 4562;
+        Integer myPort = 4560;
         Discovery discovery = new Discovery(myPort);
         Repository repository = Repository.getInstance(discovery);
-        String myName = "RepositoryThree";
+        String myName = "Tom";
         try {
             BroadcastListener listener = new BroadcastListener(repository.getAddressMap(), myName, InetAddress.getByName("localhost"), myPort);
             listener.start();

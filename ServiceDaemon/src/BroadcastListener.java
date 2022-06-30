@@ -39,7 +39,7 @@ public class BroadcastListener extends Thread{
                     String myAddress = tcpInetAddress.getHostAddress();
                     myAddress = myAddress.replaceAll(",", ".").replaceAll(" ", "");
                     String broadCastMessage = myName + ":" + myAddress + "/" + myPort;
-                    socket.send(new DatagramPacket(broadCastMessage.getBytes(StandardCharsets.UTF_8), broadCastMessage.getBytes(StandardCharsets.UTF_8).length, packet.getAddress(), packet.getPort()));
+                    socket.send(new DatagramPacket(broadCastMessage.getBytes(StandardCharsets.UTF_8), broadCastMessage.getBytes(StandardCharsets.UTF_8).length, InetAddress.getByName("255.255.255.255"), 8889));
                 }
                 else {
                     String[] address = splitData[1].split("/");

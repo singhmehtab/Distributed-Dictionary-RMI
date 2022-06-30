@@ -14,8 +14,6 @@ public interface IRepository extends IAggregate{
 
     String getValues(String key)  throws RemoteException;
 
-    String sum(String key)  throws RemoteException;
-
     String max(String key)  throws RemoteException;
 
     void resetAll()  throws RemoteException;
